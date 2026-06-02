@@ -1,0 +1,1677 @@
+asyncapi: '2.6.0'
+info:
+  title: Poloniex WebSocket API
+  version: '1.0.0'
+  description: >
+    AsyncAPI 2.6 description of the Poloniex public, private (spot) and futures
+    (v3) WebSocket interfaces. All channels and message field names are derived
+    from Poloniex's official Java and Python SDKs published at
+    https://github.com/poloniex/polo-sdk-java and
+    https://github.com/poloniex/polo-sdk-python, which the Poloniex API docs
+    site (https://api-docs.poloniex.com) links to as the authoritative
+    reference implementations.
+
+    Connections are kept alive by sending {"event":"ping"} every few seconds;
+    the server responds with {"event":"pong"}. Subscriptions use the envelope
+    {"event":"subscribe","channel":[<channel>],"symbols":[<symbol>...]} and
+    private channels require an additional auth subscribe with an HMAC SHA256
+    signature over `GET\n/ws\nsignTimestamp=<ms>`.
+  contact:
+    name: Poloniex API
+    url: https://api-docs.poloniex.com
+  license:
+    name: Poloniex Terms of Service
+    url: https://poloniex.com/legal/
+
+servers:
+  spot-public:
+    url: ws.poloniex.com/ws/public
+    protocol: wss
+    description: >
+      Spot public market data channels. Source: poloniex/polo-sdk-java README
+      ("Production | Public | wss://ws.poloniex.com/ws/public").
+  spot-private:
+    url: ws.poloniex.com/ws/private
+    protocol: wss
+    description: >
+      Spot authenticated user-data channels. Source: poloniex/polo-sdk-java
+      README ("Production | Authenticated | wss://ws.poloniex.com/ws/private").
+    security:
+      - poloniexHmac: []
+  futures-public:
+    url: ws.poloniex.com/ws/v3/public
+    protocol: wss
+    description: >
+      Futures (v3) public market data channels. Source: poloniex/polo-sdk-java
+      FuturePoloPublicWebsocketTest references
+      wss://ws.poloniex.com/ws/v3/public.
+  futures-private:
+    url: ws.poloniex.com/ws/v3/private
+    protocol: wss
+    description: >
+      Futures (v3) authenticated user-data channels. Source:
+      poloniex/polo-sdk-java FuturePoloPrivateWebsocketTest references
+      wss://ws.poloniex.com/ws/v3/private/.
+    security:
+      - poloniexHmac: []
+
+defaultContentType: application/json
+
+channels:
+
+  # ---------------------------------------------------------------------------
+  # Spot public market data channels
+  # Source: polo-sdk-python spot/ws/client_public.py and
+  # polo-sdk-java spot common/PoloApiConstants.java
+  # ---------------------------------------------------------------------------
+
+  spot/candles:
+    description: >
+      Candlestick (kline) updates for a symbol at a given interval. The
+      `<interval>` placeholder must be one of:
+      candles_minute_1, candles_minute_5, candles_minute_10, candles_minute_15,
+      candles_minute_30, candles_hour_1, candles_hour_2, candles_hour_4,
+      candles_hour_6, candles_hour_12, candles_day_1, candles_day_3,
+      candles_week_1, candles_month_1. Source:
+      polo-sdk-java spot/common/CandlestickChannels.java.
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotCandlesSubscribe
+      summary: Receive candlestick updates
+      message:
+        $ref: '#/components/messages/CandlestickEvent'
+    publish:
+      operationId: spotCandlesSubscribeRequest
+      summary: Subscribe to candlestick channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/trades:
+    description: Recent trade prints for one or more symbols.
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotTradesSubscribe
+      summary: Receive trade prints
+      message:
+        $ref: '#/components/messages/TradeEvent'
+    publish:
+      operationId: spotTradesSubscribeRequest
+      summary: Subscribe to trades channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/ticker:
+    description: Rolling 24h ticker updates for one or more symbols.
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotTickerSubscribe
+      summary: Receive ticker updates
+      message:
+        $ref: '#/components/messages/TickerEvent'
+    publish:
+      operationId: spotTickerSubscribeRequest
+      summary: Subscribe to ticker channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/book:
+    description: Top of book / aggregated order book snapshots and updates.
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotBookSubscribe
+      summary: Receive order book updates
+      message:
+        $ref: '#/components/messages/BookEvent'
+    publish:
+      operationId: spotBookSubscribeRequest
+      summary: Subscribe to book channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/book_lv2:
+    description: Level 2 incremental order book updates (snapshot + diffs).
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotBookLv2Subscribe
+      summary: Receive level 2 order book updates
+      message:
+        $ref: '#/components/messages/BookLv2Event'
+    publish:
+      operationId: spotBookLv2SubscribeRequest
+      summary: Subscribe to book_lv2 channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/symbols:
+    description: Symbol metadata stream (trade limits, state, margin info).
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotSymbolsSubscribe
+      summary: Receive symbol metadata updates
+      message:
+        $ref: '#/components/messages/SymbolEvent'
+    publish:
+      operationId: spotSymbolsSubscribeRequest
+      summary: Subscribe to symbols channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/currencies:
+    description: Currency metadata stream (network fees, wallet state).
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotCurrenciesSubscribe
+      summary: Receive currency metadata updates
+      message:
+        $ref: '#/components/messages/CurrenciesEvent'
+    publish:
+      operationId: spotCurrenciesSubscribeRequest
+      summary: Subscribe to currencies channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/exchange:
+    description: Exchange operating mode flags (maintenance, post-only).
+    servers:
+      - spot-public
+    subscribe:
+      operationId: spotExchangeSubscribe
+      summary: Receive exchange mode updates
+      message:
+        $ref: '#/components/messages/ExchangeEvent'
+    publish:
+      operationId: spotExchangeSubscribeRequest
+      summary: Subscribe to exchange channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  # ---------------------------------------------------------------------------
+  # Spot private (authenticated) channels
+  # Source: polo-sdk-python spot/ws/client_authenticated.py
+  # ---------------------------------------------------------------------------
+
+  spot/auth:
+    description: >
+      Authentication subscribe envelope sent after connecting to the spot
+      private endpoint. The `params.signature` is base64(HMAC_SHA256(secret,
+      "GET\n/ws\nsignTimestamp=<ms>")).
+    servers:
+      - spot-private
+    publish:
+      operationId: spotAuthRequest
+      summary: Authenticate the spot private session
+      message:
+        $ref: '#/components/messages/AuthSubscribeEnvelope'
+    subscribe:
+      operationId: spotAuthAck
+      summary: Receive auth acknowledgement
+      message:
+        $ref: '#/components/messages/AuthAck'
+
+  spot/orders:
+    description: Order lifecycle events (place, trade, canceled) for the account.
+    servers:
+      - spot-private
+    subscribe:
+      operationId: spotOrdersSubscribe
+      summary: Receive order events
+      message:
+        $ref: '#/components/messages/OrderEvent'
+    publish:
+      operationId: spotOrdersSubscribeRequest
+      summary: Subscribe to orders channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  spot/balances:
+    description: Account balance change events.
+    servers:
+      - spot-private
+    subscribe:
+      operationId: spotBalancesSubscribe
+      summary: Receive balance updates
+      message:
+        $ref: '#/components/messages/BalanceEvent'
+    publish:
+      operationId: spotBalancesSubscribeRequest
+      summary: Subscribe to balances channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelopeNoSymbols'
+
+  spot/createOrder:
+    description: Place an order through the websocket session.
+    servers:
+      - spot-private
+    publish:
+      operationId: spotCreateOrder
+      summary: Submit a create-order command
+      message:
+        $ref: '#/components/messages/CreateOrderRequest'
+
+  spot/cancelOrders:
+    description: Cancel one or more orders by id or client order id.
+    servers:
+      - spot-private
+    publish:
+      operationId: spotCancelOrders
+      summary: Submit a cancel-orders command
+      message:
+        $ref: '#/components/messages/CancelOrdersRequest'
+
+  spot/cancelAllOrders:
+    description: Cancel all open orders for the account.
+    servers:
+      - spot-private
+    publish:
+      operationId: spotCancelAllOrders
+      summary: Submit a cancel-all-orders command
+      message:
+        $ref: '#/components/messages/CancelAllOrdersRequest'
+
+  # ---------------------------------------------------------------------------
+  # Heartbeat (applies to every endpoint above)
+  # Source: polo-sdk-python ws/client_base.py (_ping) and
+  # polo-sdk-java PoloApiConstants EVENT_PING / EVENT_PONG.
+  # ---------------------------------------------------------------------------
+
+  heartbeat:
+    description: >
+      Client-side ping every few seconds; the server replies with
+      {"event":"pong"}. The Poloniex Java SDK constants pin the exact JSON
+      payloads.
+    publish:
+      operationId: heartbeatPing
+      summary: Send heartbeat ping
+      message:
+        $ref: '#/components/messages/Ping'
+    subscribe:
+      operationId: heartbeatPong
+      summary: Receive heartbeat pong
+      message:
+        $ref: '#/components/messages/Pong'
+
+  # ---------------------------------------------------------------------------
+  # Futures v3 public channels
+  # Source: polo-sdk-python futures/ws/client_public.py and
+  # polo-sdk-java future/common/PoloApiConstants.java
+  # ---------------------------------------------------------------------------
+
+  futures/symbol:
+    description: Product (contract) metadata stream for a futures symbol.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresSymbolSubscribe
+      summary: Receive futures product info
+      message:
+        $ref: '#/components/messages/FuturesProductInfoEvent'
+    publish:
+      operationId: futuresSymbolSubscribeRequest
+      summary: Subscribe to futures symbol channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/book:
+    description: Futures order book snapshots and updates.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresBookSubscribe
+      summary: Receive futures order book updates
+      message:
+        $ref: '#/components/messages/FuturesOrderBookEvent'
+    publish:
+      operationId: futuresBookSubscribeRequest
+      summary: Subscribe to futures book channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/book_lv2:
+    description: Futures level 2 incremental order book updates.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresBookLv2Subscribe
+      summary: Receive futures level 2 book updates
+      message:
+        $ref: '#/components/messages/FuturesOrderBookV2Event'
+    publish:
+      operationId: futuresBookLv2SubscribeRequest
+      summary: Subscribe to futures book_lv2 channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/candles:
+    description: >
+      Futures candlestick updates. The `<interval>` placeholder must be one of:
+      candles_minute_1, candles_minute_5, candles_minute_10, candles_minute_15,
+      candles_minute_30, candles_hour_1, hour_2, hour_4, hour_6, hour_12,
+      candles_day_1, candles_day_3, candles_week_1, candles_month_1. Source:
+      polo-sdk-java future/common/CandlesChannels.java.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresCandlesSubscribe
+      summary: Receive futures candlestick updates
+      message:
+        $ref: '#/components/messages/FuturesKlineEvent'
+    publish:
+      operationId: futuresCandlesSubscribeRequest
+      summary: Subscribe to futures candles channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/tickers:
+    description: Futures rolling 24h ticker updates.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresTickersSubscribe
+      summary: Receive futures ticker updates
+      message:
+        $ref: '#/components/messages/FuturesTickersEvent'
+    publish:
+      operationId: futuresTickersSubscribeRequest
+      summary: Subscribe to futures tickers channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/trades:
+    description: Futures trade prints stream.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresTradesSubscribe
+      summary: Receive futures trades
+      message:
+        $ref: '#/components/messages/FuturesTradingInfoEvent'
+    publish:
+      operationId: futuresTradesSubscribeRequest
+      summary: Subscribe to futures trades channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/index_price:
+    description: Futures index price stream.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresIndexPriceSubscribe
+      summary: Receive index price updates
+      message:
+        $ref: '#/components/messages/FuturesIndexPriceEvent'
+    publish:
+      operationId: futuresIndexPriceSubscribeRequest
+      summary: Subscribe to index_price channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/mark_price:
+    description: Futures mark price stream.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresMarkPriceSubscribe
+      summary: Receive mark price updates
+      message:
+        $ref: '#/components/messages/FuturesMarkPriceEvent'
+    publish:
+      operationId: futuresMarkPriceSubscribeRequest
+      summary: Subscribe to mark_price channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/index_price_candles:
+    description: >
+      Futures index-price kline updates. Channel names follow the pattern
+      index_candles_<interval> (e.g. index_candles_minute_1). Source:
+      polo-sdk-python futures/ws/client_public.py
+      subscribe_to_IndexPriceKlineData.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresIndexPriceCandlesSubscribe
+      summary: Receive index-price kline updates
+      message:
+        $ref: '#/components/messages/FuturesKlineEvent'
+    publish:
+      operationId: futuresIndexPriceCandlesSubscribeRequest
+      summary: Subscribe to index_candles_<interval> channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/mark_price_candles:
+    description: >
+      Futures mark-price kline updates. Channel names follow the pattern
+      mark_price_candles_<interval> (e.g. mark_price_candles_minute_1).
+      Source: polo-sdk-python futures/ws/client_public.py
+      subscribe_to_MarkPriceKlineData.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresMarkPriceCandlesSubscribe
+      summary: Receive mark-price kline updates
+      message:
+        $ref: '#/components/messages/FuturesKlineEvent'
+    publish:
+      operationId: futuresMarkPriceCandlesSubscribeRequest
+      summary: Subscribe to mark_price_candles_<interval> channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/funding_rate:
+    description: Futures funding rate stream.
+    servers:
+      - futures-public
+    subscribe:
+      operationId: futuresFundingRateSubscribe
+      summary: Receive funding rate updates
+      message:
+        $ref: '#/components/messages/FuturesFundingRateEvent'
+    publish:
+      operationId: futuresFundingRateSubscribeRequest
+      summary: Subscribe to funding_rate channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  # ---------------------------------------------------------------------------
+  # Futures v3 private (authenticated) channels
+  # Source: polo-sdk-python futures/ws/client_authenticated.py
+  # ---------------------------------------------------------------------------
+
+  futures/auth:
+    description: >
+      Authentication subscribe envelope for the futures private endpoint. The
+      signature is identical to the spot case: base64(HMAC_SHA256(secret,
+      "GET\n/ws\nsignTimestamp=<ms>")).
+    servers:
+      - futures-private
+    publish:
+      operationId: futuresAuthRequest
+      summary: Authenticate the futures private session
+      message:
+        $ref: '#/components/messages/AuthSubscribeEnvelope'
+    subscribe:
+      operationId: futuresAuthAck
+      summary: Receive auth acknowledgement
+      message:
+        $ref: '#/components/messages/AuthAck'
+
+  futures/positions:
+    description: Open positions stream for the futures account.
+    servers:
+      - futures-private
+    subscribe:
+      operationId: futuresPositionsSubscribe
+      summary: Receive position updates
+      message:
+        $ref: '#/components/messages/FuturesPositionsEvent'
+    publish:
+      operationId: futuresPositionsSubscribeRequest
+      summary: Subscribe to positions channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/orders:
+    description: Futures order lifecycle stream.
+    servers:
+      - futures-private
+    subscribe:
+      operationId: futuresOrdersSubscribe
+      summary: Receive futures order events
+      message:
+        $ref: '#/components/messages/FuturesOrdersEvent'
+    publish:
+      operationId: futuresOrdersSubscribeRequest
+      summary: Subscribe to futures orders channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/trade:
+    description: Futures own-trade execution stream.
+    servers:
+      - futures-private
+    subscribe:
+      operationId: futuresTradeSubscribe
+      summary: Receive own-trade executions
+      message:
+        $ref: '#/components/messages/FuturesTradeEvent'
+    publish:
+      operationId: futuresTradeSubscribeRequest
+      summary: Subscribe to futures trade channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+  futures/account:
+    description: Futures account change stream (equity, margin, PnL).
+    servers:
+      - futures-private
+    subscribe:
+      operationId: futuresAccountSubscribe
+      summary: Receive futures account changes
+      message:
+        $ref: '#/components/messages/FuturesAccountChangeEvent'
+    publish:
+      operationId: futuresAccountSubscribeRequest
+      summary: Subscribe to futures account channel
+      message:
+        $ref: '#/components/messages/SubscribeEnvelope'
+
+components:
+
+  securitySchemes:
+    poloniexHmac:
+      type: symmetricEncryption
+      description: >
+        After opening the private websocket, send a subscribe message on the
+        `auth` channel with params {key, signTimestamp, signature} where
+        signature = base64(HMAC_SHA256(apiSecret, "GET\n/ws\nsignTimestamp=<ms>")).
+        Both spot and futures private endpoints share this scheme. Source:
+        polo-sdk-python ws/client_authenticated.py _authenticate /
+        _get_signature.
+
+  messages:
+
+    SubscribeEnvelope:
+      name: SubscribeEnvelope
+      title: Subscribe envelope
+      summary: Subscribe (or unsubscribe) to one or more channels.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - channel
+        properties:
+          event:
+            type: string
+            enum: [subscribe, unsubscribe]
+            description: subscribe / unsubscribe action.
+          channel:
+            type: array
+            items:
+              type: string
+            description: Channel names (e.g. ["candles_minute_1"], ["book_lv2"]).
+          symbols:
+            type: array
+            items:
+              type: string
+            description: Symbols to subscribe to. Use ["all"] for the wildcard.
+      examples:
+        - name: subscribeBookLv2
+          payload:
+            event: subscribe
+            channel: [book_lv2]
+            symbols: [BTC_USDT]
+
+    SubscribeEnvelopeNoSymbols:
+      name: SubscribeEnvelopeNoSymbols
+      title: Subscribe envelope without symbols
+      summary: Some account-wide channels (e.g. balances) take no symbols list.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - channel
+        properties:
+          event:
+            type: string
+            enum: [subscribe, unsubscribe]
+          channel:
+            type: array
+            items:
+              type: string
+
+    AuthSubscribeEnvelope:
+      name: AuthSubscribeEnvelope
+      title: Auth subscribe envelope
+      summary: Authenticate a private session by subscribing to the `auth` channel.
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - channel
+          - params
+        properties:
+          event:
+            type: string
+            enum: [subscribe]
+          channel:
+            type: array
+            items:
+              type: string
+              enum: [auth]
+          params:
+            type: object
+            required:
+              - key
+              - signTimestamp
+              - signature
+            properties:
+              key:
+                type: string
+                description: API key.
+              signTimestamp:
+                type: integer
+                format: int64
+                description: Unix timestamp in milliseconds.
+              signature:
+                type: string
+                description: >
+                  base64(HMAC_SHA256(apiSecret, "GET\n/ws\nsignTimestamp=<ms>")).
+      examples:
+        - name: authExample
+          payload:
+            event: subscribe
+            channel: [auth]
+            params:
+              key: my-api-key
+              signTimestamp: 1716998400000
+              signature: 6n2Q...base64...
+
+    AuthAck:
+      name: AuthAck
+      title: Auth acknowledgement
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+          channel:
+            type: string
+          data:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+
+    Ping:
+      name: Ping
+      title: Heartbeat ping
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            enum: [ping]
+
+    Pong:
+      name: Pong
+      title: Heartbeat pong
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+            enum: [pong]
+
+    # -------------------------------------------------------------------------
+    # Spot public event payloads (wrapped in PoloEvent envelope)
+    # -------------------------------------------------------------------------
+
+    CandlestickEvent:
+      name: CandlestickEvent
+      title: Candlestick event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Candlestick'
+
+    TradeEvent:
+      name: TradeEvent
+      title: Trade event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Trade'
+
+    TickerEvent:
+      name: TickerEvent
+      title: Ticker event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Ticker'
+
+    BookEvent:
+      name: BookEvent
+      title: Order book event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Book'
+
+    BookLv2Event:
+      name: BookLv2Event
+      title: Level 2 order book event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_BookLv2'
+
+    SymbolEvent:
+      name: SymbolEvent
+      title: Symbol metadata event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Symbol'
+
+    CurrenciesEvent:
+      name: CurrenciesEvent
+      title: Currency metadata event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Currencies'
+
+    ExchangeEvent:
+      name: ExchangeEvent
+      title: Exchange mode event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Exchange'
+
+    # -------------------------------------------------------------------------
+    # Spot private event payloads
+    # -------------------------------------------------------------------------
+
+    OrderEvent:
+      name: OrderEvent
+      title: Order lifecycle event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Order'
+
+    BalanceEvent:
+      name: BalanceEvent
+      title: Balance change event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_Balance'
+
+    CreateOrderRequest:
+      name: CreateOrderRequest
+      title: Create order command
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - params
+        properties:
+          id:
+            type: string
+            description: Optional client-side correlation id.
+          event:
+            type: string
+            enum: [createOrder]
+          params:
+            type: object
+            properties:
+              symbol:
+                type: string
+              type:
+                type: string
+                enum: [MARKET, LIMIT, LIMIT_MAKER]
+              quantity:
+                type: string
+              side:
+                type: string
+                enum: [BUY, SELL]
+              price:
+                type: string
+              timeInForce:
+                type: string
+                enum: [GTC, IOC, FOK]
+              clientOrderId:
+                type: string
+
+    CancelOrdersRequest:
+      name: CancelOrdersRequest
+      title: Cancel orders command
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - params
+        properties:
+          id:
+            type: string
+          event:
+            type: string
+            enum: [cancelOrders]
+          params:
+            type: object
+            properties:
+              orderIds:
+                type: array
+                items:
+                  type: string
+              clientOrderIds:
+                type: array
+                items:
+                  type: string
+
+    CancelAllOrdersRequest:
+      name: CancelAllOrdersRequest
+      title: Cancel all orders command
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+        properties:
+          id:
+            type: string
+          event:
+            type: string
+            enum: [cancelAllOrders]
+          params:
+            type: object
+
+    # -------------------------------------------------------------------------
+    # Futures public event payloads
+    # -------------------------------------------------------------------------
+
+    FuturesProductInfoEvent:
+      name: FuturesProductInfoEvent
+      title: Futures product info event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesProductInfo'
+
+    FuturesOrderBookEvent:
+      name: FuturesOrderBookEvent
+      title: Futures order book event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesOrderBook'
+
+    FuturesOrderBookV2Event:
+      name: FuturesOrderBookV2Event
+      title: Futures level 2 order book event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesOrderBookV2'
+
+    FuturesKlineEvent:
+      name: FuturesKlineEvent
+      title: Futures kline event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesKline'
+
+    FuturesTickersEvent:
+      name: FuturesTickersEvent
+      title: Futures tickers event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesTickers'
+
+    FuturesTradingInfoEvent:
+      name: FuturesTradingInfoEvent
+      title: Futures trade event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesTradingInfo'
+
+    FuturesIndexPriceEvent:
+      name: FuturesIndexPriceEvent
+      title: Futures index price event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesIndexPrice'
+
+    FuturesMarkPriceEvent:
+      name: FuturesMarkPriceEvent
+      title: Futures mark price event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesMarkPrice'
+
+    FuturesFundingRateEvent:
+      name: FuturesFundingRateEvent
+      title: Futures funding rate event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesFundingRate'
+
+    # -------------------------------------------------------------------------
+    # Futures private event payloads
+    # -------------------------------------------------------------------------
+
+    FuturesPositionsEvent:
+      name: FuturesPositionsEvent
+      title: Futures positions event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesPositions'
+
+    FuturesOrdersEvent:
+      name: FuturesOrdersEvent
+      title: Futures orders event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesOrders'
+
+    FuturesTradeEvent:
+      name: FuturesTradeEvent
+      title: Futures trade event (own executions)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesTrade'
+
+    FuturesAccountChangeEvent:
+      name: FuturesAccountChangeEvent
+      title: Futures account change event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PoloEnvelope_FuturesAccountChange'
+
+  schemas:
+
+    # -------------------------------------------------------------------------
+    # Generic envelope (spot uses PoloEvent<T>; futures uses the same shape)
+    # Source: polo-sdk-java spot/model/event/spot/PoloEvent.java
+    # -------------------------------------------------------------------------
+
+    PoloEnvelopeBase:
+      type: object
+      properties:
+        event:
+          type: string
+          description: Server-side event type (e.g. subscribe, message, error).
+        channel:
+          type: string
+          description: Channel that produced the data.
+        symbols:
+          type: array
+          items:
+            type: string
+        action:
+          type: string
+          enum: [snapshot, update]
+        message:
+          type: string
+
+    PoloEnvelope_Candlestick:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CandlestickData'
+
+    PoloEnvelope_Trade:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TradeData'
+
+    PoloEnvelope_Ticker:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TickerData'
+
+    PoloEnvelope_Book:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BookData'
+
+    PoloEnvelope_BookLv2:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BookLv2Data'
+
+    PoloEnvelope_Symbol:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/SymbolData'
+
+    PoloEnvelope_Currencies:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CurrenciesData'
+
+    PoloEnvelope_Exchange:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExchangeData'
+
+    PoloEnvelope_Order:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderData'
+
+    PoloEnvelope_Balance:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceData'
+
+    PoloEnvelope_FuturesProductInfo:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesProductInfoData'
+
+    PoloEnvelope_FuturesOrderBook:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesOrderBookData'
+
+    PoloEnvelope_FuturesOrderBookV2:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesOrderBookV2Data'
+
+    PoloEnvelope_FuturesKline:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              description: >
+                Futures kline frames are delivered as positional arrays
+                [s, o, l, h, c, qty, amt, tC, sT, cT, ts]. Source:
+                polo-sdk-java future/model/event/future/K_lineDataEvent.java
+                inner-class comments.
+              items:
+                type: array
+                items: {}
+
+    PoloEnvelope_FuturesTickers:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesTickersData'
+
+    PoloEnvelope_FuturesTradingInfo:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesTradingInfoData'
+
+    PoloEnvelope_FuturesIndexPrice:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesIndexPriceData'
+
+    PoloEnvelope_FuturesMarkPrice:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesMarkPriceData'
+
+    PoloEnvelope_FuturesFundingRate:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesFundingRateData'
+
+    PoloEnvelope_FuturesPositions:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesPositionsData'
+
+    PoloEnvelope_FuturesOrders:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesOrdersData'
+
+    PoloEnvelope_FuturesTrade:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesTradeData'
+
+    PoloEnvelope_FuturesAccountChange:
+      allOf:
+        - $ref: '#/components/schemas/PoloEnvelopeBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/FuturesAccountChangeData'
+
+    # -------------------------------------------------------------------------
+    # Spot data schemas
+    # Sources: polo-sdk-java spot/model/event/spot/*.java
+    # -------------------------------------------------------------------------
+
+    CandlestickData:
+      type: object
+      properties:
+        symbol: { type: string, description: Symbol name }
+        amount: { type: string, description: Quote units traded over the interval }
+        high: { type: string, description: Highest price over the interval }
+        quantity: { type: string, description: Base units traded over the interval }
+        tradeCount: { type: integer, description: Number of trades }
+        low: { type: string, description: Lowest price over the interval }
+        closeTime: { type: integer, format: int64, description: Close time of interval (ms) }
+        startTime: { type: integer, format: int64, description: Start time of interval (ms) }
+        close: { type: string, description: Price at end time }
+        open: { type: string, description: Price at start time }
+        ts: { type: integer, format: int64, description: Time record was pushed (ms) }
+
+    TradeData:
+      type: object
+      properties:
+        symbol: { type: string }
+        amount: { type: string, description: Quote units traded }
+        takerSide: { type: string, enum: [buy, sell] }
+        quantity: { type: string, description: Base units traded }
+        createTime: { type: integer, format: int64 }
+        price: { type: string }
+        id: { type: integer, format: int64 }
+        ts: { type: integer, format: int64 }
+
+    TickerData:
+      type: object
+      properties:
+        symbol: { type: string }
+        dailyChange: { type: string, description: Daily change in decimal }
+        high: { type: string }
+        amount: { type: string }
+        quantity: { type: string }
+        tradeCount: { type: integer }
+        low: { type: string }
+        closeTime: { type: integer, format: int64 }
+        startTime: { type: integer, format: int64 }
+        close: { type: string }
+        open: { type: string }
+        ts: { type: integer, format: int64 }
+        markPrice: { type: string }
+
+    BookData:
+      type: object
+      properties:
+        symbol: { type: string }
+        createTime: { type: integer, format: int64 }
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+            description: '[price, quantity]'
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        id: { type: integer, format: int64, description: Record id (SeqId) }
+        ts: { type: integer, format: int64 }
+
+    BookLv2Data:
+      type: object
+      properties:
+        symbol: { type: string }
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        createTime: { type: integer, format: int64 }
+        lastId: { type: integer, format: int64, description: Previous message id }
+        id: { type: integer, format: int64, description: Record id (SeqId) }
+        ts: { type: integer, format: int64 }
+
+    SymbolData:
+      type: object
+      properties:
+        symbol: { type: string }
+        baseCurrencyName: { type: string }
+        quoteCurrencyName: { type: string }
+        displayName: { type: string }
+        state: { type: string, enum: [NORMAL, PAUSE, POST_ONLY] }
+        visibleStartTime: { type: integer, format: int64 }
+        tradableStartTime: { type: integer, format: int64 }
+        symbolTradeLimit:
+          type: object
+          properties:
+            symbol: { type: string }
+            priceScale: { type: integer }
+            quantityScale: { type: integer }
+            amountScale: { type: integer }
+            minQuantity: { type: string }
+            minAmount: { type: string }
+            highestBid: { type: string }
+            lowestAsk: { type: string }
+        crossMargin:
+          type: object
+          properties:
+            supportCrossMargin: { type: boolean }
+            maxLeverage: { type: integer }
+
+    CurrenciesData:
+      type: object
+      properties:
+        currency: { type: string }
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        type: { type: string }
+        withdrawalFee: { type: string }
+        minConf: { type: integer }
+        depositAddress: { type: string }
+        blockchain: { type: string }
+        delisted: { type: boolean }
+        tradingState: { type: string, enum: [NORMAL, OFFLINE] }
+        walletState: { type: string, enum: [ENABLED, DISABLED] }
+        parentChain: { type: string }
+        isMultiChain: { type: boolean }
+        isChildChain: { type: boolean }
+        supportCollateral: { type: boolean }
+        supportBorrow: { type: boolean }
+        childChains:
+          type: array
+          items:
+            type: string
+
+    ExchangeData:
+      type: object
+      properties:
+        MM:
+          type: string
+          enum: [ON, OFF]
+          description: Maintenance mode
+        POM:
+          type: string
+          enum: [ON, OFF]
+          description: Post-only mode
+
+    OrderData:
+      type: object
+      properties:
+        symbol: { type: string }
+        type: { type: string, enum: [MARKET, LIMIT, LIMIT_MAKER] }
+        quantity: { type: string }
+        orderId: { type: string }
+        tradeFee: { type: string }
+        clientOrderId: { type: string }
+        accountType: { type: string, enum: [SPOT] }
+        feeCurrency: { type: string }
+        eventType: { type: string, enum: [place, trade, canceled] }
+        source: { type: string, enum: [WEB, APP, API] }
+        side: { type: string, enum: [BUY, SELL] }
+        filledQuantity: { type: string }
+        filledAmount: { type: string }
+        matchRole: { type: string, enum: [MAKER, TAKER] }
+        state:
+          type: string
+          enum: [NEW, PARTIALLY_FILLED, FILLED, PENDING_CANCEL, PARTIALLY_CANCELED, CANCELED, FAILED]
+        tradeTime: { type: integer, format: int64 }
+        tradeAmount: { type: string }
+        orderAmount: { type: string }
+        createTime: { type: integer, format: int64 }
+        price: { type: string }
+        tradeQty: { type: string }
+        tradePrice: { type: string }
+        tradeId: { type: string }
+        ts: { type: integer, format: int64 }
+
+    BalanceData:
+      type: object
+      properties:
+        changeTime: { type: integer, format: int64 }
+        accountId: { type: string }
+        eventType: { type: string }
+        available: { type: string }
+        currency: { type: string }
+        id: { type: integer, format: int64 }
+        userId: { type: integer, format: int64 }
+        hold: { type: string }
+        ts: { type: integer, format: int64 }
+
+    # -------------------------------------------------------------------------
+    # Futures data schemas
+    # Sources: polo-sdk-java future/model/event/future/*.java
+    # -------------------------------------------------------------------------
+
+    FuturesProductInfoData:
+      type: object
+      properties:
+        symbol: { type: string }
+        visibleStartTime: { type: string }
+        tradableStartTime: { type: string }
+        pxScale: { type: string, description: Price precision }
+        lotSz: { type: integer, description: Order size precision }
+        minSz: { type: integer, description: Minimum order size }
+        ctVal: { type: string, description: Contract face value }
+        status: { type: string }
+        maxPx: { type: string }
+        minPx: { type: string }
+        maxQty: { type: string }
+        minQty: { type: string }
+        maxLever: { type: string }
+        lever: { type: string }
+        ctType: { type: string }
+        alias: { type: string }
+        bAsset: { type: string }
+        bCcy: { type: string }
+        qCcy: { type: string }
+        sCcy: { type: string }
+        tSz: { type: string }
+        oDate: { type: string }
+        iM: { type: string }
+        mM: { type: string }
+        mR: { type: string }
+
+    FuturesOrderBookData:
+      type: object
+      properties:
+        s: { type: string, description: Symbol }
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        id: { type: integer, format: int64 }
+        ts: { type: integer, format: int64 }
+        cT: { type: integer, format: int64 }
+
+    FuturesOrderBookV2Data:
+      type: object
+      properties:
+        s: { type: string }
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        lid: { type: integer, format: int64, description: Last version id }
+        id: { type: integer, format: int64, description: Current version id }
+        ts: { type: integer, format: int64 }
+        cT: { type: integer, format: int64 }
+
+    FuturesTickersData:
+      type: object
+      properties:
+        s: { type: string }
+        o: { type: string, description: Opening price }
+        l: { type: string, description: Lowest price (24h) }
+        h: { type: string, description: Highest price (24h) }
+        c: { type: string, description: Closing price }
+        qty: { type: string, description: Base/contract quantity }
+        amt: { type: string, description: Quote quantity }
+        tC: { type: integer, format: int64, description: Trades count }
+        sT: { type: integer, format: int64, description: 24h interval start }
+        cT: { type: integer, format: int64, description: 24h interval end }
+        dC: { type: string, description: Daily price change in decimal }
+        bPx: { type: string, description: Best bid price }
+        bSz: { type: string, description: Best bid size }
+        aPx: { type: string, description: Best ask price }
+        aSz: { type: string, description: Best ask size }
+        ts: { type: integer, format: int64 }
+
+    FuturesTradingInfoData:
+      type: object
+      properties:
+        id: { type: integer, format: int64, description: Trade ID }
+        ts: { type: integer, format: int64, description: Push time }
+        s: { type: string }
+        px: { type: string, description: Execution price }
+        qty: { type: string }
+        amt: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        cT: { type: integer, format: int64, description: Execution timestamp }
+
+    FuturesIndexPriceData:
+      type: object
+      properties:
+        s: { type: string }
+        iPx: { type: string, description: Index price }
+        ts: { type: integer, format: int64 }
+
+    FuturesMarkPriceData:
+      type: object
+      properties:
+        s: { type: string }
+        mPx: { type: string, description: Mark price }
+        ts: { type: integer, format: int64 }
+
+    FuturesFundingRateData:
+      type: object
+      properties:
+        s: { type: string }
+        ts: { type: integer, format: int64 }
+        fR: { type: string, description: Funding rate }
+        fT: { type: integer, format: int64, description: Most recent funding settle ts }
+        nFR: { type: string, description: Predicted next funding rate }
+        nFT: { type: integer, format: int64, description: Next funding time }
+
+    FuturesPositionsData:
+      type: object
+      properties:
+        symbol: { type: string }
+        posSide: { type: string, description: BOTH/LONG/SHORT }
+        side: { type: string, enum: [BUY, SELL] }
+        mgnMode: { type: string, enum: [ISOLATED, CROSS] }
+        openAvgPx: { type: string }
+        qty: { type: string }
+        oldQty: { type: string }
+        availQty: { type: string }
+        lever: { type: string }
+        fee: { type: string }
+        adl: { type: string }
+        liqPx: { type: string, description: Estimated liquidation price }
+        mgn: { type: string }
+        im: { type: string }
+        mm: { type: string }
+        upl: { type: string, description: Unrealized PnL }
+        uplRatio: { type: string }
+        fPnl: { type: string }
+        pnl: { type: string }
+        fFee: { type: string }
+        markPx: { type: string }
+        mgnRatio: { type: string }
+        state: { type: string }
+        cTime: { type: integer, format: int64 }
+        uTime: { type: integer, format: int64 }
+
+    FuturesOrdersData:
+      type: object
+      properties:
+        symbol: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        type: { type: string, enum: [MARKET, LIMIT, LIMIT_MAKER] }
+        mgnMode: { type: string, enum: [ISOLATED, CROSS, CASH] }
+        timeInForce: { type: string, enum: [FOK, IOC, GTC] }
+        clOrdId: { type: string }
+        sz: { type: string }
+        px: { type: string }
+        reduceOnly: { type: boolean }
+        posSide: { type: string, enum: [BOTH, LONG, SHORT] }
+        ordId: { type: string }
+        state:
+          type: string
+          enum: [NEW, PARTIAL_FILLED, FILLED, PARTIAL_CANCELED, CANCELED]
+        cancelReason: { type: string }
+        source: { type: string }
+        avgPx: { type: string }
+        execQty: { type: string }
+        execAmt: { type: string }
+        feeCcy: { type: string }
+        feeAmt: { type: string }
+        deductCcy: { type: string }
+        deductAmt: { type: string }
+        cTime: { type: integer, format: int64 }
+        uTime: { type: integer, format: int64 }
+
+    FuturesTradeData:
+      type: object
+      properties:
+        symbol: { type: string }
+        side: { type: string, enum: [BUY, SELL] }
+        ordId: { type: string }
+        clOrdId: { type: string }
+        role: { type: string, enum: [MAKER, TAKER] }
+        trdId: { type: string }
+        feeCcy: { type: string }
+        feeAmt: { type: string }
+        deductCcy: { type: string }
+        deductAmt: { type: string }
+        fpx: { type: string, description: Execution price }
+        fqty: { type: string, description: Execution size }
+        uTime: { type: string, description: Trade update time (ms) }
+
+    FuturesAccountChangeData:
+      type: object
+      properties:
+        state: { type: string }
+        eq: { type: string, description: Equity }
+        isoEq: { type: string }
+        im: { type: string }
+        mm: { type: string }
+        mmr: { type: string }
+        upl: { type: string }
+        availMgn: { type: string }
+        cTime: { type: string }
+        uTime: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              ccy: { type: string }
+              eq: { type: string }
+              isoEq: { type: string }
+              avail: { type: string }
+              upl: { type: string }
+              isoAvail: { type: string }
+              isoHold: { type: string }
+              isoUpl: { type: string }
+              im: { type: string }
+              imr: { type: string }
+              mm: { type: string }
+              mmr: { type: string }
+              cTime: { type: string }
+              uTime: { type: string }

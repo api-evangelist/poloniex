@@ -4,7 +4,7 @@ description: "US based digital asset exchange"
 url: https://docs.poloniex.com
 specificationVersion: '0.20'
 created: '2026-05-28'
-modified: '2026-05-28'
+modified: '2026-05-29'
 x-source: public-apis/public-apis
 x-category: "Cryptocurrency"
 x-tier: 3
@@ -22,6 +22,8 @@ apis:
     properties:
       - type: Documentation
         url: https://docs.poloniex.com
+      - type: AsyncAPI
+        url: asyncapi/poloniex-asyncapi.yml
 common:
   - type: Website
     url: https://docs.poloniex.com
