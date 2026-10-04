@@ -35,11 +35,11 @@ x-tier-reason: bulk-registered-from-public-apis
 tags:
   - Cryptocurrency
   - Public APIs
+  - Real-Time
 apis:
   - name: Poloniex
     description: "US based digital asset exchange"
     humanURL: https://docs.poloniex.com
-    baseURL: https://docs.poloniex.com
     tags:
       - Cryptocurrency
     properties:
