@@ -1,4 +1,4 @@
-# Poloniex (poloniex)
+# Poloniex
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -66,26 +66,125 @@
 
 US based digital asset exchange
 
-**APIs.yml:** [apis.yml](apis.yml)
+**Areas:** Cryptocurrency · Public APIs · Real-Time
 
-## Type
-- **x-type:** company
-- **x-tier:** 3 (bulk-registered from public-apis)
-- **source:** [public-apis/public-apis](https://github.com/public-apis/public-apis) — category: Cryptocurrency
+## Poloniex on APIs.io
 
-## API
-- **Poloniex** — [Documentation](https://docs.poloniex.com)
+Everything profiled for Poloniex is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/poloniex/](https://apis.io/providers/poloniex/)** — or go straight to one of the APIs or properties below.
 
-## Tags
-Cryptocurrency, Public APIs
+### APIs (1)
 
-## Notes
-This entry was bulk-registered as part of a public-apis catalog sweep on 2026-05-28.
-A real OpenAPI artifact will be added during a follow-up enrichment pass if the provider publishes one.
+- [Poloniex](https://apis.io/apis/poloniex/poloniex/) — US based digital asset exchange
 
-## Timestamps
-- **Created:** 2026-05-28
-- **Modified:** 2026-05-28
+### Published properties
 
-## Maintainers
-- **Kin Lane** — kin@apievangelist.com
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Poloniex WebSocket API](https://apis.io/asyncapis/poloniex/poloniex-asyncapi/)
+
+#### Event channels (31)
+
+Individual events and webhooks the provider emits.
+
+- [futures/account](https://apis.io/channels/poloniex/futures-account/)
+- [futures/auth](https://apis.io/channels/poloniex/futures-auth/)
+- [futures/book](https://apis.io/channels/poloniex/futures-book/)
+- [futures/book_lv2](https://apis.io/channels/poloniex/futures-book-lv2/)
+- [futures/candles](https://apis.io/channels/poloniex/futures-candles/)
+- [futures/funding_rate](https://apis.io/channels/poloniex/futures-funding-rate/)
+- [futures/index_price](https://apis.io/channels/poloniex/futures-index-price/)
+- [futures/index_price_candles](https://apis.io/channels/poloniex/futures-index-price-candles/)
+- [futures/mark_price](https://apis.io/channels/poloniex/futures-mark-price/)
+- [futures/mark_price_candles](https://apis.io/channels/poloniex/futures-mark-price-candles/)
+- [futures/orders](https://apis.io/channels/poloniex/futures-orders/)
+- [futures/positions](https://apis.io/channels/poloniex/futures-positions/)
+- [futures/symbol](https://apis.io/channels/poloniex/futures-symbol/)
+- [futures/tickers](https://apis.io/channels/poloniex/futures-tickers/)
+- [futures/trade](https://apis.io/channels/poloniex/futures-trade/)
+- [futures/trades](https://apis.io/channels/poloniex/futures-trades/)
+- [heartbeat](https://apis.io/channels/poloniex/heartbeat/)
+- [spot/auth](https://apis.io/channels/poloniex/spot-auth/)
+- [spot/balances](https://apis.io/channels/poloniex/spot-balances/)
+- [spot/book](https://apis.io/channels/poloniex/spot-book/)
+- [spot/book_lv2](https://apis.io/channels/poloniex/spot-book-lv2/)
+- [spot/cancelAllOrders](https://apis.io/channels/poloniex/spot-cancelallorders/)
+- [spot/cancelOrders](https://apis.io/channels/poloniex/spot-cancelorders/)
+- [spot/candles](https://apis.io/channels/poloniex/spot-candles/)
+- [spot/createOrder](https://apis.io/channels/poloniex/spot-createorder/)
+- …and 6 more published on APIs.io
+
+#### Governance rules (1)
+
+Spectral rulesets for the provider's contracts.
+
+- [Poloniex — asyncapi rules](https://apis.io/rules/poloniex/poloniex-asyncapi-spectral-rules/)
+
+#### Security (1)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Poloniex Domain Security](https://apis.io/security/poloniex/poloniex-domain-security/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://docs.poloniex.com)
+- [Blog](https://api-docs.poloniex.com/blog/)
+
+## API Evangelist rating
+
+**Kin Score 16.3** — emerging · rubric 0.24.0 · scored 2026-10-17
+
+| Facet | Score |
+|---|---|
+| Discoverability | 46.4 |
+| Contract quality | 43.8 |
+| Contract governance | 13.6 |
+| Operational transparency | 0.0 |
+| Developer ergonomics | 2.4 |
+| Access clarity | 0.0 |
+
+**Agent readiness 14.0** — agent-aware
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | — |
+| Idempotency | — |
+| Error Semantics | — |
+| OpenAPI Examples | — |
+| Rate Limit Signal | — |
+| Event Surface Described | derived (partial credit) |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+
+**Regulatory alignment 5.9** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/poloniex/](https://apis.io/providers/poloniex/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Poloniex: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/poloniex/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
